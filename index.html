@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Сладкий побег по клавиатуре</title>
+  <link rel="icon" href="data:,">
+  <script src="https://games.pikabu.ru/sdk/sdk.js"></script>
+    <script src="./pikabu-bridge.js"></script>
+  <link rel="preload" href="assets/fonts/lilita-one.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/rubik.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-root">
+    <canvas id="game-canvas"></canvas>
+    <div id="vignette"></div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-left">
+          <div class="pill pill-score" aria-label="Конфеты"><span class="game-icon icon-candy" aria-hidden="true"></span><span id="hud-coins">0</span></div>
+          <div class="pill pill-speed"><span class="game-icon icon-home" aria-hidden="true"></span><span id="hud-room"></span></div>
+          <div id="hud-hearts" aria-label="Здоровье"></div>
+          <button id="btn-boost" class="boost-btn"><span class="vid-tag" data-i18n="vidTag">📺 Ad</span> <span id="boost-label" data-i18n="x2Btn">×2 доход</span></button>
+        </div>
+        <div class="hud-right">
+          <button id="btn-gifts" class="icon-btn" aria-label="Ежедневные подарки и бонусы" title="Ежедневные подарки и бонусы"><span class="game-icon icon-gift" aria-hidden="true"></span><span class="daily-ready-dot" aria-hidden="true"></span></button>
+          <button id="btn-park-exit" class="icon-btn hidden" aria-label="Вернуться в лобби" title="Вернуться в лобби"><span class="game-icon icon-home" aria-hidden="true"></span></button>
+          <button id="btn-shop" class="icon-btn" aria-label="Магазины стиля" title="Магазины стиля"><span class="game-icon icon-wardrobe" aria-hidden="true"></span></button>
+          <button id="btn-mute" class="icon-btn" aria-label="Звук"><span class="game-icon icon-speaker" aria-hidden="true"></span></button>
+          <button id="btn-pause" class="icon-btn" aria-label="Пауза" title="Пауза"><span class="game-icon icon-pause" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div id="room-flash" class="hidden"></div>
+      <div id="hint" class="hidden"></div>
+    </div>
+
+    <!-- Touch controls -->
+    <div id="touch-controls" class="hidden">
+      <div id="joy-zone" aria-label="Веди, чтобы двигаться">
+        <div class="joy-rest" aria-hidden="true"><span></span></div>
+        <div id="joy-base" class="hidden"><div id="joy-knob"></div></div>
+      </div>
+      <button id="btn-attack" aria-label="Атака"><span class="game-icon icon-attack" aria-hidden="true"></span></button>
+      <button id="btn-jump" aria-label="Прыжок"><span class="game-icon icon-jump" aria-hidden="true"></span></button>
+      <button id="btn-emote" class="icon-btn" aria-label="Показать выбранную эмоцию" title="Эмоция (B)"><span class="game-icon icon-trophy" aria-hidden="true"></span></button>
+    </div>
+
+    <!-- Park build prompt -->
+    <div id="park-prompt" class="hidden">
+      <span id="park-prompt-emoji" class="game-icon icon-gift" aria-hidden="true"></span>
+      <div class="park-prompt-info">
+        <b id="park-prompt-name">—</b>
+        <span id="park-prompt-cost" class="price">0 конфет</span>
+      </div>
+      <button id="btn-park-build" class="vendor-buy" data-i18n="build">Построить</button>
+    </div>
+
+    <!-- Vendor panel -->
+    <div id="vendor-panel" class="hidden">
+      <div class="vendor-head">
+        <span id="vendor-icon" class="game-icon icon-sprint" aria-hidden="true"></span>
+        <div class="vendor-titles">
+          <div id="vendor-title">—</div>
+          <div id="vendor-desc">—</div>
+        </div>
+      </div>
+      <div id="vendor-body"></div>
+    </div>
+
+    <!-- Loading -->
+    <div id="screen-loading" class="screen">
+      <div class="panel panel-clear">
+        <div class="loading-mark" aria-hidden="true"><span class="game-icon icon-candy"></span></div>
+        <p class="loading-eyebrow">НЕМНОГО ПОБЕГА. МНОГО ХРУСТА.</p>
+        <h1 class="game-title"><span class="title-plus">ХРУМ</span><span data-i18n="title">Сладкий побег по клавиатуре</span></h1>
+        <div class="loader-bar"><div id="loader-fill"></div></div>
+        <p class="loading-label" data-i18n="loading">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- Pause -->
+    <div id="screen-pause" class="screen hidden">
+      <div class="panel">
+        <div class="panel-emblem"><span class="game-icon icon-pause" aria-hidden="true"></span></div>
+        <h2 data-i18n="paused">Пауза</h2>
+        <button id="btn-resume" class="btn btn-primary" data-i18n="resume">Продолжить</button>
+        <button id="btn-controls" class="btn btn-secondary">Управление</button>
+        <button id="btn-pause-hub" class="btn btn-secondary" data-i18n="toHub">В лобби</button>
+        <div class="menu-row">
+          <button id="btn-lang" class="btn btn-small hidden"><span id="lang-name">English</span></button>
+          <button id="btn-mute-menu" class="btn btn-small" aria-label="Звук"><span class="game-icon icon-speaker" aria-hidden="true"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Death -->
+    <div id="screen-death" class="screen hidden">
+      <div class="panel">
+        <h2 id="death-title">—</h2>
+        <div class="score-final">
+          <div class="score-label"><span class="game-icon icon-candy" aria-hidden="true"></span></div>
+          <div id="death-coins" class="score-value">0</div>
+        </div>
+        <button id="btn-revive" class="btn btn-bonus"><span class="vid-tag" data-i18n="vidTag">📺 Ad</span> <span data-i18n="reviveSpot">Возродиться на месте</span></button>
+        <button id="btn-restart-room" class="btn btn-primary" data-i18n="toHub">В лобби</button>
+      </div>
+    </div>
+
+    <!-- Video reward offer (modal) -->
+    <div id="screen-vid-offer" class="screen hidden">
+      <div class="panel panel-offer">
+        <h2 id="vid-offer-title">—</h2>
+        <div id="vid-offer-emoji" class="game-icon icon-candy" aria-hidden="true"></div>
+        <p id="vid-offer-desc" class="offer-desc">—</p>
+        <p id="vid-offer-note" class="offer-note">—</p>
+        <button id="btn-vid-offer-ok" class="btn btn-bonus">
+          <span class="vid-tag" data-i18n="vidTag">📺 Ad</span>
+          <span data-i18n="offerWatch">Смотри рекламу и получи награду</span>
+        </button>
+        <button id="btn-vid-offer-no" class="btn btn-secondary" data-i18n="offerCancel">Отмена</button>
+      </div>
+    </div>
+
+    <!-- Daily gifts -->
+    <div id="screen-daily" class="screen hidden">
+      <div class="panel panel-daily">
+        <div class="gift-tabs" role="group" aria-label="Раздел подарков">
+          <button class="shop-tab" aria-pressed="true" disabled>Ежедневные подарки</button>
+          <button id="btn-daily-videos" class="shop-tab" aria-pressed="false">Награды за видео</button>
+        </div>
+        <p class="daily-eyebrow">СЕМЬ ВИЗИТОВ · СЕМЬ ПОДАРКОВ</p>
+        <h2>Ежедневные подарки</h2>
+        <p class="shop-sub">Один бесплатный подарок в день. Пропустил день? Прогресс сохранится.</p>
+        <div class="daily-progress"><span id="daily-progress-label">0 / 7 собрано</span><div><i id="daily-progress-fill"></i></div></div>
+        <div class="daily-layout">
+          <div id="daily-days" aria-label="Ежедневные конфеты"></div>
+          <div id="daily-finale" class="daily-finale">
+            <span class="daily-day-label">ДЕНЬ 7 · ЭКСКЛЮЗИВ</span>
+            <img src="assets/skins/skin_daily_crown.png" alt="Sunrise Sovereign exclusive daily outfit" width="256" height="320">
+            <b>Владыка рассвета</b>
+            <span class="daily-exclusive">Только здесь, в магазине не будет.</span>
+            <span id="daily-skin-state" class="daily-card-state"></span>
+          </div>
+        </div>
+        <p id="daily-status" class="daily-status" role="status" aria-live="polite"></p>
+        <button id="btn-daily-claim" class="btn btn-bonus">Забрать день 1</button>
+        <button id="btn-daily-equip" class="btn btn-primary hidden">Надеть эксклюзивный наряд</button>
+        <p class="daily-reset-note">Новый день подарков начинается в 03:00 по Москве. Собери все семь, чтобы заполнить календарь.</p>
+        <button id="btn-daily-close" class="btn btn-secondary" data-i18n="close">Закрыть</button>
+      </div>
+    </div>
+    <div id="screen-bonus" class="screen hidden">
+      <div class="panel panel-bonus">
+        <div class="gift-tabs" role="group" aria-label="Раздел подарков">
+          <button id="btn-bonus-daily" class="shop-tab" aria-pressed="false">Ежедневные подарки</button>
+          <button class="shop-tab" aria-pressed="true" disabled>Награды за видео</button>
+        </div>
+        <div class="panel-emblem"><span class="game-icon icon-gift" aria-hidden="true"></span></div>
+        <h2>Бонусы</h2>
+        <p id="bonus-sub" class="shop-sub">Выбери награду и посмотри рекламу, чтобы её получить.</p>
+        <div id="bonus-list"></div>
+        <button id="btn-bonus-close" class="btn btn-primary" data-i18n="close">Закрыть</button>
+      </div>
+    </div>
+    <div id="screen-shop" class="screen hidden">
+      <div class="panel panel-lb">
+        <h2 data-i18n="shopTitle">Наряды</h2>
+        <p class="shop-sub" data-i18n="shopSub">Найди свой сладкий стиль</p>
+        <div id="shop-tabs" class="shop-tabs" role="group" aria-label="Раздел магазина">
+          <button class="shop-tab" data-shop="skins" aria-pressed="true">Наряды</button>
+          <button class="shop-tab" data-shop="trails" aria-pressed="false">Следы</button>
+          <button class="shop-tab" data-shop="pets" aria-pressed="false">Питомцы</button>
+          <button class="shop-tab" data-shop="emotes" aria-pressed="false">Эмоции</button>
+        </div>
+        <div class="shop-wallet"><span class="game-icon icon-candy" aria-hidden="true"></span><span id="shop-coins">0</span><span id="shop-owned"></span></div>
+        <button id="btn-shop-remove" class="btn btn-small btn-secondary hidden">Снять</button>
+        <div id="shop-list"></div>
+        <button id="btn-shop-close" class="btn btn-primary" data-i18n="close">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Controls tutorial -->
+    <div id="screen-tutorial" class="screen hidden">
+      <div class="panel panel-tut">
+        <div class="panel-emblem"><span class="game-icon icon-jump" aria-hidden="true"></span></div>
+        <h2 data-i18n="tutTitle">Как играть</h2>
+        <p class="tutorial-goal">Беги по конфетным клавишам, выбирай дверь и доберись до следующей комнаты. Перепрыгивай пропасти и уворачивайся от ловушек.</p>
+        <div class="tutorial-tabs" role="group" aria-label="Схема управления">
+          <button id="btn-tut-desktop" class="btn btn-small" aria-pressed="true">Компьютер / мышь</button>
+          <button id="btn-tut-mobile" class="btn btn-small" aria-pressed="false">Телефон / сенсор</button>
+        </div>
+        <div id="tut-cards"></div>
+        <p id="tut-start-note" class="tutorial-note"></p>
+        <button id="btn-tut-play" class="btn btn-primary" data-i18n="tutPlay">Играть!</button>
+      </div>
+    </div>
+
+    <div id="choco-overlay"></div>
+    <div id="toast" class="hidden"></div>
+    <div id="platform-pause-overlay" class="hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="platform-pause-title" aria-describedby="platform-pause-description" tabindex="-1">
+      <div class="platform-pause-card">
+        <div class="platform-pause-emblem" aria-hidden="true"><span class="game-icon icon-pause"></span></div>
+        <p class="platform-pause-eyebrow">ПРИКЛЮЧЕНИЕ НА ПАУЗЕ</p>
+        <h2 id="platform-pause-title">Игра на паузе</h2>
+        <p id="platform-pause-description">Нажми, чтобы продолжить.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lib/three.min.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/platform.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/collections.js"></script>
+  <script src="js/daily-gifts.js"></script>
+  <script src="js/character-effects.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

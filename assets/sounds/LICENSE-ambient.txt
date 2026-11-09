@@ -1,0 +1,9 @@
+Sunset Walk
+Author: Kilua Boy (KiluaBoy)
+License: CC0 1.0 Universal / Public Domain
+Verified on author upload page on 2026-09-28.
+Source: https://opengameart.org/content/sunset-walk-ambient-quiet-sweet-loop
+Download: https://opengameart.org/sites/default/files/SunsetWalk.wav
+License: https://creativecommons.org/publicdomain/zero/1.0/
+Attribution is optional under the stated license; we credit Kilua Boy.
+Derived game file: music.mp3; cyclic crossfade and MP3 conversion.
